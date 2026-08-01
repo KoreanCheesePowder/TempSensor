@@ -1,0 +1,121 @@
+name: cp-temp-humidity-battery
+components:
+  - id: main
+    capabilities:
+      - id: temperatureMeasurement
+        version: 1
+      - id: relativeHumidityMeasurement
+        version: 1
+      - id: battery
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+      - id: buildbook37604.driverInformation
+        version: 1
+    categories:
+      - name: TempHumiditySensor
+
+deviceConfig:
+  dashboard:
+    states:
+      - component: main
+        capability: temperatureMeasurement
+        version: 1
+        group: main
+        values:
+          - label: "{{temperature.value}} {{temperature.unit}}"
+        composite: true
+      - component: main
+        capability: relativeHumidityMeasurement
+        version: 1
+        group: main
+        values:
+          - label: "{{humidity.value}} {{humidity.unit}}"
+        composite: true
+    actions: []
+    basicPlus: []
+  detailView:
+    - component: main
+      capability: temperatureMeasurement
+      version: 1
+    - component: main
+      capability: relativeHumidityMeasurement
+      version: 1
+    - component: main
+      capability: battery
+      version: 1
+    - component: main
+      capability: firmwareUpdate
+      version: 1
+    - component: main
+      capability: refresh
+      version: 1
+    - component: main
+      capability: buildbook37604.driverInformation
+      version: 1
+  automation:
+    conditions:
+      - component: main
+        capability: temperatureMeasurement
+        version: 1
+      - component: main
+        capability: relativeHumidityMeasurement
+        version: 1
+      - component: main
+        capability: battery
+        version: 1
+    actions:
+      - component: main
+        capability: refresh
+        version: 1
+
+preferences:
+  - preferenceId: tempOffset
+    explicit: true
+  - preferenceId: humidityOffset
+    explicit: true
+  - name: temperatureReportDelta
+    title: Temperature report change
+    description: Requested temperature change threshold. The sensor firmware may ignore this value.
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "10": "0.1 C"
+        "20": "0.2 C"
+        "30": "0.3 C"
+        "50": "0.5 C"
+        "100": "1.0 C"
+      default: "10"
+  - name: humidityReportDelta
+    title: Humidity report change
+    description: Requested humidity change threshold. The sensor firmware may ignore this value.
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "50": "0.5 %"
+        "100": "1 %"
+        "200": "2 %"
+        "300": "3 %"
+        "500": "5 %"
+      default: "100"
+  - name: humidityReportMax
+    title: Humidity maximum report interval
+    description: Maximum interval requested for humidity reports when the value does not change.
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "60": "1 minute"
+        "300": "5 minutes"
+        "600": "10 minutes"
+        "900": "15 minutes"
+        "1800": "30 minutes"
+        "3600": "60 minutes"
+      default: "300"
+metadata:
+  mnmn: SmartThingsCommunity
+  ocfDeviceType: x.com.st.d.sensor.temphumidity

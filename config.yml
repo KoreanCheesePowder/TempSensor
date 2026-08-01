@@ -1,0 +1,4 @@
+name: C.P TempSensor 0.1C
+packageKey: cheesepowder.sonoff-temp-sensor-01
+permissions:
+  zigbee: {}
