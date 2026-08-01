@@ -16,7 +16,6 @@ components:
         version: 1
     categories:
       - name: TempHumiditySensor
-
 deviceConfig:
   dashboard:
     states:
@@ -74,11 +73,20 @@ deviceConfig:
 preferences:
   - preferenceId: tempOffset
     explicit: true
-  - preferenceId: humidityOffset
-    explicit: true
+  - name: temperaturePrecision
+    title: Temperature precision
+    description: Rounds the displayed and automated temperature value to the selected step.
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        p01: "0.1 C"
+        p05: "0.5 C"
+        p10: "1.0 C"
+      default: p01
   - name: temperatureReportDelta
     title: Temperature report change
-    description: Requested temperature change threshold. The sensor firmware may ignore this value.
+    description: Temperature change that triggers a new Zigbee report.
     required: true
     preferenceType: enumeration
     definition:
@@ -89,9 +97,48 @@ preferences:
         "50": "0.5 C"
         "100": "1.0 C"
       default: "10"
+  - name: temperatureReportMin
+    title: Temperature minimum report interval
+    description: Shortest allowed interval between temperature reports.
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "1": "1 second"
+        "2": "2 seconds"
+        "5": "5 seconds"
+        "10": "10 seconds"
+      default: "1"
+  - name: temperatureReportMax
+    title: Temperature maximum report interval
+    description: Maximum interval before temperature is reported even when unchanged.
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "10": "10 seconds"
+        "30": "30 seconds"
+        "60": "1 minute"
+        "300": "5 minutes"
+        "600": "10 minutes"
+      default: "10"
+
+  - preferenceId: humidityOffset
+    explicit: true
+  - name: humidityPrecision
+    title: Humidity precision
+    description: Rounds the displayed and automated humidity value to the selected step.
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "1": "1 %"
+        "2": "2 %"
+        "5": "5 %"
+      default: "1"
   - name: humidityReportDelta
     title: Humidity report change
-    description: Requested humidity change threshold. The sensor firmware may ignore this value.
+    description: Humidity change that triggers a new Zigbee report.
     required: true
     preferenceType: enumeration
     definition:
@@ -101,21 +148,42 @@ preferences:
         "200": "2 %"
         "300": "3 %"
         "500": "5 %"
-      default: "100"
-  - name: humidityReportMax
-    title: Humidity maximum report interval
-    description: Maximum interval requested for humidity reports when the value does not change.
+      default: "50"
+  - name: humidityReportMin
+    title: Humidity minimum report interval
+    description: Shortest allowed interval between humidity reports.
     required: true
     preferenceType: enumeration
     definition:
       options:
+        "1": "1 second"
+        "2": "2 seconds"
+        "5": "5 seconds"
+        "10": "10 seconds"
+      default: "1"
+  - name: humidityReportMax
+    title: Humidity maximum report interval
+    description: Maximum interval before humidity is reported even when unchanged.
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "10": "10 seconds"
+        "30": "30 seconds"
         "60": "1 minute"
         "300": "5 minutes"
         "600": "10 minutes"
         "900": "15 minutes"
         "1800": "30 minutes"
         "3600": "60 minutes"
-      default: "300"
+      default: "60"
+  - name: saveHistory
+    title: Save to device history
+    description: Stores temperature and humidity changes in SmartThings device history.
+    required: true
+    preferenceType: boolean
+    definition:
+      default: true
 metadata:
   mnmn: SmartThingsCommunity
   ocfDeviceType: x.com.st.d.sensor.temphumidity
