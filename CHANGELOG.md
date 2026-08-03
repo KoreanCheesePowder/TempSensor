@@ -1,13 +1,10 @@
-# Changelog
+# 변경 이력
 
-## v1.4.0
-
-- Promoted the verified Zigbee reporting logic from the v1.3.0 diagnostic build.
-- Added configurable minimum report intervals for temperature and humidity.
-- Retained configurable report-change thresholds and maximum intervals.
-- Retained wake-time reporting reconfiguration for sleepy battery sensors.
-- Removed diagnostic report timing and raw-value logs.
-- Removed diagnostic-only documentation and test wording.
-- Reordered preferences into temperature and humidity sections.
-- Set responsive defaults: temperature 0.1 C / 10 s maximum, humidity 0.5 % / 60 s maximum.
-- Updated all version labels to v1.4.0.
+## v1.6.0
+- SONOFF Poll Control 체크인 주기 설정 정식 적용
+- 빠른 폴링 간격 및 유지 시간 설정 적용
+- 실제 반영되지 않는 LongPollInterval 쓰기 제거
+- 설정값 적용 후 자동 Read-back 검증
+- 센서가 깨어난 직후 대기 중 설정을 즉시 전송
+- 온도/습도 요약 한 줄 표시 및 한글 설정 유지
+- 테스트 전용 로그 정리

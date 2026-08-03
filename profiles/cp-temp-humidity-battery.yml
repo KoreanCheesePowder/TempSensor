@@ -31,7 +31,7 @@ deviceConfig:
         version: 1
         group: main
         values:
-          - label: "{{humidity.value}} {{humidity.unit}}"
+          - label: " {{humidity.value}} {{humidity.unit}}"
         composite: true
     actions: []
     basicPlus: []
@@ -74,8 +74,8 @@ preferences:
   - preferenceId: tempOffset
     explicit: true
   - name: temperaturePrecision
-    title: Temperature precision
-    description: Rounds the displayed and automated temperature value to the selected step.
+    title: 온도 표시 정밀도
+    description: 표시 및 자동화에 사용하는 온도 값을 선택한 단위로 반올림합니다.
     required: true
     preferenceType: enumeration
     definition:
@@ -85,8 +85,8 @@ preferences:
         p10: "1.0 C"
       default: p01
   - name: temperatureReportDelta
-    title: Temperature report change
-    description: Temperature change that triggers a new Zigbee report.
+    title: 온도 변화 보고 기준
+    description: 이 값 이상 온도가 변하면 센서가 새 값을 보고합니다.
     required: true
     preferenceType: enumeration
     definition:
@@ -98,36 +98,82 @@ preferences:
         "100": "1.0 C"
       default: "10"
   - name: temperatureReportMin
-    title: Temperature minimum report interval
-    description: Shortest allowed interval between temperature reports.
+    title: 온도 최소 보고 간격
+    description: 온도 보고 사이에 허용되는 최소 간격입니다.
     required: true
     preferenceType: enumeration
     definition:
       options:
-        "1": "1 second"
-        "2": "2 seconds"
-        "5": "5 seconds"
-        "10": "10 seconds"
+        "1": "1초"
+        "2": "2초"
+        "5": "5초"
+        "10": "10초"
       default: "1"
-  - name: temperatureReportMax
-    title: Temperature maximum report interval
-    description: Maximum interval before temperature is reported even when unchanged.
+  - name: sensorReportInterval
+    title: 센서 정기 보고 주기
+    description: 센서 펌웨어가 지원하는 범위에서 이 주기마다 깨어나 온도와 습도를 다시 보고합니다. 주기를 짧게 설정할수록 배터리 소모가 증가합니다.
     required: true
     preferenceType: enumeration
     definition:
       options:
-        "10": "10 seconds"
-        "30": "30 seconds"
-        "60": "1 minute"
-        "300": "5 minutes"
-        "600": "10 minutes"
-      default: "10"
+        "10": "10초"
+        "30": "30초"
+        "60": "1분"
+        "300": "5분"
+        "600": "10분"
+        "900": "15분"
+        "1800": "30분"
+        "3600": "60분"
+      default: "60"
+
+  - name: sleepCheckInInterval
+    title: 센서 절전 체크인 주기
+    description: 센서가 절전 상태에서 허브의 대기 명령을 확인하는 주기입니다. 짧게 설정할수록 응답은 빨라지지만 배터리 소모가 크게 증가합니다.
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "1": "1초"
+        "5": "5초"
+        "10": "10초"
+        "30": "30초"
+        "60": "1분"
+        "300": "5분"
+        "600": "10분"
+        "1740": "29분 (기본값)"
+        "1800": "30분"
+      default: "1740"
+  - name: shortPollInterval
+    title: 빠른 폴링 간격
+    description: 센서가 빠른 폴링 상태일 때 허브를 확인하는 간격입니다. 짧을수록 응답은 빨라지지만 배터리 소모가 증가합니다.
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "1": "0.25초"
+        "2": "0.5초"
+        "4": "1초"
+        "8": "2초"
+      default: "4"
+  - name: fastPollTimeout
+    title: 빠른 폴링 유지 시간
+    description: 빠른 폴링 상태를 유지하는 시간입니다. 시간이 길수록 배터리 소모가 증가합니다.
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "20": "5초"
+        "40": "10초"
+        "80": "20초"
+        "120": "30초"
+        "240": "60초"
+      default: "40"
 
   - preferenceId: humidityOffset
     explicit: true
   - name: humidityPrecision
-    title: Humidity precision
-    description: Rounds the displayed and automated humidity value to the selected step.
+    title: 습도 표시 정밀도
+    description: 표시 및 자동화에 사용하는 습도 값을 선택한 단위로 반올림합니다.
     required: true
     preferenceType: enumeration
     definition:
@@ -137,8 +183,8 @@ preferences:
         "5": "5 %"
       default: "1"
   - name: humidityReportDelta
-    title: Humidity report change
-    description: Humidity change that triggers a new Zigbee report.
+    title: 습도 변화 보고 기준
+    description: 이 값 이상 습도가 변하면 센서가 새 값을 보고합니다.
     required: true
     preferenceType: enumeration
     definition:
@@ -150,36 +196,21 @@ preferences:
         "500": "5 %"
       default: "50"
   - name: humidityReportMin
-    title: Humidity minimum report interval
-    description: Shortest allowed interval between humidity reports.
+    title: 습도 최소 보고 간격
+    description: 습도 보고 사이에 허용되는 최소 간격입니다.
     required: true
     preferenceType: enumeration
     definition:
       options:
-        "1": "1 second"
-        "2": "2 seconds"
-        "5": "5 seconds"
-        "10": "10 seconds"
+        "1": "1초"
+        "2": "2초"
+        "5": "5초"
+        "10": "10초"
       default: "1"
-  - name: humidityReportMax
-    title: Humidity maximum report interval
-    description: Maximum interval before humidity is reported even when unchanged.
-    required: true
-    preferenceType: enumeration
-    definition:
-      options:
-        "10": "10 seconds"
-        "30": "30 seconds"
-        "60": "1 minute"
-        "300": "5 minutes"
-        "600": "10 minutes"
-        "900": "15 minutes"
-        "1800": "30 minutes"
-        "3600": "60 minutes"
-      default: "60"
+
   - name: saveHistory
-    title: Save to device history
-    description: Stores temperature and humidity changes in SmartThings device history.
+    title: 기기 기록에 저장
+    description: 온도와 습도 변화를 SmartThings 기기 기록에 저장합니다.
     required: true
     preferenceType: boolean
     definition:

@@ -1,31 +1,14 @@
-# C.P TempSensor 0.1C v1.4.0
+# C.P TempSensor 0.1C v1.6.0
 
-SmartThings Edge Driver for SONOFF Zigbee temperature and humidity sensors.
+SONOFF 온습도 센서용 SmartThings Edge 드라이버입니다.
 
-## Main features
+주요 기능:
+- 온도 0.1도 단위 처리
+- 온도/습도 보고 간격 및 변화 기준 설정
+- 센서 절전 체크인 주기 설정
+- 빠른 폴링 간격 및 유지 시간 설정
+- 설정 변경 시 센서가 깨어난 직후 자동 적용
+- 한글 설정 설명
+- 요약정보 온도와 습도 사이 공백 표시
 
-- Temperature reporting down to 0.1 C
-- Configurable temperature and humidity report-change thresholds
-- Configurable minimum and maximum reporting intervals
-- Temperature and humidity offset correction
-- Configurable display precision
-- Temperature and humidity shown together on the dashboard card
-- SmartThings device-history compatible standard events
-- Reporting configuration re-applied when a sleepy battery sensor wakes
-- Battery and firmware-update capabilities retained
-
-## Recommended responsive settings
-
-- Temperature report change: 0.1 C
-- Temperature minimum report interval: 1 second
-- Temperature maximum report interval: 10 seconds
-- Humidity report change: 0.5 %
-- Humidity minimum report interval: 1 second
-- Humidity maximum report interval: 1 minute
-
-Aggressive reporting intervals can reduce battery life and increase Zigbee traffic.
-
-## Installation
-
-Run `SETUP-AND-INSTALL.cmd`, then select the channel and hub when prompted.
-After installation, change the device driver in the SmartThings app.
+주의: 1초 또는 5초 체크인 설정은 배터리 소모를 크게 증가시킬 수 있습니다.

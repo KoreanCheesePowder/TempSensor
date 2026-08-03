@@ -4,16 +4,18 @@ local defaults = require "st.zigbee.defaults"
 local clusters = require "st.zigbee.zcl.clusters"
 local data_types = require "st.zigbee.data_types"
 local device_management = require "st.zigbee.device_management"
+local cluster_base = require "st.zigbee.cluster_base"
 local log = require "log"
 
 local TemperatureMeasurement = clusters.TemperatureMeasurement
 local RelativeHumidity = clusters.RelativeHumidity
 local PowerConfiguration = clusters.PowerConfiguration
+local PollControl = clusters.PollControl
 
 local driver_info = capabilities["buildbook37604.driverInformation"]
 
 local DRIVER_NAME = "C.P TempSensor 0.1C"
-local DRIVER_VERSION = "v1.4.0"
+local DRIVER_VERSION = "v1.6.0"
 local DRIVER_AUTHOR = "치즈가루"
 
 local function allowed_number(value, fallback, allowed)
@@ -31,9 +33,26 @@ local function get_temperature_min_interval(device)
     { [1] = true, [2] = true, [5] = true, [10] = true })
 end
 
-local function get_temperature_max_interval(device)
-  return allowed_number(device.preferences.temperatureReportMax, 10,
-    { [10] = true, [30] = true, [60] = true, [300] = true, [600] = true })
+local function get_sensor_report_interval(device)
+  return allowed_number(device.preferences.sensorReportInterval, 60,
+    { [10] = true, [30] = true, [60] = true, [300] = true, [600] = true,
+      [900] = true, [1800] = true, [3600] = true })
+end
+
+local function get_sleep_checkin_interval(device)
+  return allowed_number(device.preferences.sleepCheckInInterval, 1740,
+    { [1] = true, [5] = true, [10] = true, [30] = true, [60] = true,
+      [300] = true, [600] = true, [1740] = true, [1800] = true })
+end
+
+local function get_short_poll_interval(device)
+  return allowed_number(device.preferences.shortPollInterval, 4,
+    { [1] = true, [2] = true, [4] = true, [8] = true })
+end
+
+local function get_fast_poll_timeout(device)
+  return allowed_number(device.preferences.fastPollTimeout, 40,
+    { [20] = true, [40] = true, [80] = true, [120] = true, [240] = true })
 end
 
 local function get_humidity_change(device)
@@ -44,12 +63,6 @@ end
 local function get_humidity_min_interval(device)
   return allowed_number(device.preferences.humidityReportMin, 1,
     { [1] = true, [2] = true, [5] = true, [10] = true })
-end
-
-local function get_humidity_max_interval(device)
-  return allowed_number(device.preferences.humidityReportMax, 60,
-    { [10] = true, [30] = true, [60] = true, [300] = true, [600] = true,
-      [900] = true, [1800] = true, [3600] = true })
 end
 
 local function get_temperature_precision(device)
@@ -97,6 +110,82 @@ local function emit_driver_information(device)
   end
 end
 
+
+local function read_poll_control(device, reason)
+  log.info(string.format(
+    "Poll Control read-back requested (%s): %s",
+    tostring(reason), tostring(device.label or device.id)))
+
+  device:send(PollControl.attributes.CheckInInterval:read(device))
+  device:send(PollControl.attributes.ShortPollInterval:read(device))
+  device:send(PollControl.attributes.FastPollTimeout:read(device))
+end
+
+local function make_poll_control_attribute_handler(name)
+  return function(driver, device, value, zb_rx)
+    local raw = value and value.value or value
+    local seconds = type(raw) == "number" and raw / 4 or "n/a"
+    log.info(string.format(
+      "Poll Control applied: %s raw=%s seconds=%s device=%s",
+      tostring(name), tostring(raw), tostring(seconds),
+      tostring(device.label or device.id)))
+  end
+end
+
+local function apply_poll_control(device, reason)
+  local checkin_seconds = get_sleep_checkin_interval(device)
+  local checkin_quarter_seconds = checkin_seconds * 4
+  local short_poll_quarter_seconds = get_short_poll_interval(device)
+  local fast_poll_timeout_quarter_seconds = get_fast_poll_timeout(device)
+
+  local writes = {
+    { name = "CheckInInterval", attr_id = PollControl.attributes.CheckInInterval.ID,
+      value = data_types.Uint32(checkin_quarter_seconds) },
+    { name = "ShortPollInterval", attr_id = PollControl.attributes.ShortPollInterval.ID,
+      value = data_types.Uint16(short_poll_quarter_seconds) },
+    { name = "FastPollTimeout", attr_id = PollControl.attributes.FastPollTimeout.ID,
+      value = data_types.Uint16(fast_poll_timeout_quarter_seconds) }
+  }
+
+  log.info(string.format(
+    "Applying Poll Control (%s): checkIn=%ds shortPoll=%.2fs fastTimeout=%.2fs device=%s",
+    tostring(reason), checkin_seconds, short_poll_quarter_seconds / 4,
+    fast_poll_timeout_quarter_seconds / 4, tostring(device.label or device.id)))
+
+  local all_sent = true
+  for _, item in ipairs(writes) do
+    local ok, err = pcall(function()
+      local message = cluster_base.write_attribute(
+        device,
+        data_types.ClusterId(PollControl.ID),
+        data_types.AttributeId(item.attr_id),
+        item.value)
+      device:send(message)
+    end)
+
+    if not ok then
+      all_sent = false
+      log.error(string.format(
+        "Poll Control write failed: %s error=%s",
+        item.name, tostring(err)))
+    end
+  end
+
+  if all_sent then
+    device:set_field("pending_poll_config", false, { persist = false })
+    device.thread:call_with_delay(2, function()
+      read_poll_control(device, "after-write")
+    end)
+  else
+    device:set_field("pending_poll_config", true, { persist = false })
+  end
+end
+
+local function request_poll_config_when_awake(device, source)
+  if device:get_field("pending_poll_config") ~= true then return end
+  apply_poll_control(device, "device-awake:" .. tostring(source))
+end
+
 local function send_reads(device)
   device:send(TemperatureMeasurement.attributes.MeasuredValue:read(device))
   device:send(RelativeHumidity.attributes.MeasuredValue:read(device))
@@ -105,10 +194,10 @@ end
 
 local function configure_reporting(driver, device, reason)
   local temp_min = get_temperature_min_interval(device)
-  local temp_max = get_temperature_max_interval(device)
+  local temp_max = get_sensor_report_interval(device)
   local temp_change = get_temperature_change(device)
   local humidity_min = get_humidity_min_interval(device)
-  local humidity_max = get_humidity_max_interval(device)
+  local humidity_max = get_sensor_report_interval(device)
   local humidity_change = get_humidity_change(device)
 
   if temp_min > temp_max then temp_min = temp_max end
@@ -137,25 +226,25 @@ end
 
 local function request_config_when_awake(driver, device, source)
   if device:get_field("pending_reporting_config") ~= true then return end
-  device:set_field("pending_reporting_config", false, { persist = false })
-  device.thread:call_with_delay(1, function()
-    configure_reporting(driver, device, "device-awake:" .. tostring(source))
-  end)
+  configure_reporting(driver, device, "device-awake:" .. tostring(source))
 end
 
 local function added_handler(driver, device)
   device:set_field("pending_reporting_config", true, { persist = false })
+  device:set_field("pending_poll_config", true, { persist = false })
   emit_driver_information(device)
 end
 
 local function init_handler(driver, device)
   device:set_field("pending_reporting_config", true, { persist = false })
+  device:set_field("pending_poll_config", true, { persist = false })
   emit_driver_information(device)
 end
 
 local function do_configure_handler(driver, device)
   device:set_field("pending_reporting_config", true, { persist = false })
-  configure_reporting(driver, device, "doConfigure")
+  device:set_field("pending_poll_config", true, { persist = false })
+  send_reads(device)
   emit_driver_information(device)
 end
 
@@ -168,14 +257,24 @@ local function info_changed_handler(driver, device, event, args)
   local reporting_changed =
     old.temperatureReportDelta ~= device.preferences.temperatureReportDelta or
     old.temperatureReportMin ~= device.preferences.temperatureReportMin or
-    old.temperatureReportMax ~= device.preferences.temperatureReportMax or
     old.humidityReportDelta ~= device.preferences.humidityReportDelta or
     old.humidityReportMin ~= device.preferences.humidityReportMin or
-    old.humidityReportMax ~= device.preferences.humidityReportMax
+    old.sensorReportInterval ~= device.preferences.sensorReportInterval
+
+  local poll_changed =
+    old.sleepCheckInInterval ~= device.preferences.sleepCheckInInterval or
+    old.shortPollInterval ~= device.preferences.shortPollInterval or
+    old.fastPollTimeout ~= device.preferences.fastPollTimeout
 
   if reporting_changed then
     device:set_field("pending_reporting_config", true, { persist = false })
-    configure_reporting(driver, device, "preference-change")
+  end
+  if poll_changed then
+    device:set_field("pending_poll_config", true, { persist = false })
+  end
+
+  if reporting_changed or poll_changed then
+    send_reads(device)
   elseif old.tempOffset ~= device.preferences.tempOffset or
          old.humidityOffset ~= device.preferences.humidityOffset or
          old.temperaturePrecision ~= device.preferences.temperaturePrecision or
@@ -194,6 +293,7 @@ end
 
 local function temperature_handler(driver, device, value, zb_rx)
   request_config_when_awake(driver, device, "temperature-report")
+  request_poll_config_when_awake(device, "temperature-report")
 
   local offset = tonumber(device.preferences.tempOffset) or 0
   local measured = value.value / 100.0
@@ -207,6 +307,7 @@ end
 
 local function humidity_handler(driver, device, value, zb_rx)
   request_config_when_awake(driver, device, "humidity-report")
+  request_poll_config_when_awake(device, "humidity-report")
 
   local offset = tonumber(device.preferences.humidityOffset) or 0
   local measured = value.value / 100.0
@@ -248,6 +349,14 @@ local driver_template = {
       },
       [RelativeHumidity.ID] = {
         [RelativeHumidity.attributes.MeasuredValue.ID] = humidity_handler
+      },
+      [PollControl.ID] = {
+        [PollControl.attributes.CheckInInterval.ID] =
+          make_poll_control_attribute_handler("CheckInInterval"),
+        [PollControl.attributes.ShortPollInterval.ID] =
+          make_poll_control_attribute_handler("ShortPollInterval"),
+        [PollControl.attributes.FastPollTimeout.ID] =
+          make_poll_control_attribute_handler("FastPollTimeout")
       }
     }
   }
