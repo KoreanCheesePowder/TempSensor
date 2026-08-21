@@ -1,4 +1,4 @@
-name: C.P TempSensor 0.1C
+name: 치즈가루 온습도 센서 0.1°C
 packageKey: cheesepowder.sonoff-temp-sensor-01
 permissions:
   zigbee: {}
