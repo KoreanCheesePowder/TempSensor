@@ -15,7 +15,7 @@ if (-not (Get-Command smartthings.exe -ErrorAction SilentlyContinue) -and
 }
 
 Write-Host "============================================================" -ForegroundColor DarkGray
-Write-Host "C.P TempSensor 0.1C v1.4.0" -ForegroundColor Cyan
+Write-Host "C.P TempSensor 0.1C v1.6.1" -ForegroundColor Cyan
 Write-Host "Author: CheesePowder" -ForegroundColor DarkGray
 Write-Host "============================================================" -ForegroundColor DarkGray
 Write-Host ""
@@ -25,5 +25,5 @@ Write-Host ""
 Invoke-ST -Arguments @("edge:drivers:package", ".", "--install")
 
 Write-Host ""
-Write-Host "Installation completed: C.P TempSensor 0.1C v1.4.0" -ForegroundColor Green
+Write-Host "Installation completed: C.P TempSensor 0.1C v1.6.1" -ForegroundColor Green
 Write-Host "Open SmartThings and change the sensor driver to C.P TempSensor 0.1C." -ForegroundColor Yellow

@@ -15,7 +15,7 @@ local PollControl = clusters.PollControl
 local driver_info = capabilities["buildbook37604.driverInformation"]
 
 local DRIVER_NAME = "C.P TempSensor 0.1C"
-local DRIVER_VERSION = "v1.6.0"
+local DRIVER_VERSION = "v1.6.1"
 local DRIVER_AUTHOR = "치즈가루"
 
 local function allowed_number(value, fallback, allowed)

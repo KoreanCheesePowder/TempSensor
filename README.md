@@ -1,4 +1,4 @@
-# C.P TempSensor 0.1C v1.6.0
+# C.P TempSensor 0.1C v1.6.1
 
 SONOFF 온습도 센서용 SmartThings Edge 드라이버입니다.
 
